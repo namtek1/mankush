@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ManKush - Sales Report</title>
+  <style>
+     body {
+      font-family: Arial, sans-serif;
+      background-image: url('backgroundmain.png'); 
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .report-container {
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      width: 95%;
+      max-width: 900px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: red;
+    }
+    table {
+      width: 100%;
+      margin: 20px 0;
+      border-collapse: collapse;
+      background-color: #fff;
+      color: #333;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    td {
+      background-color: #f9f9f9;
+    }
+    button {
+      background-color: #0056b3;
+      color: white;
+      padding: 10px 15px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    button:hover {
+      background-color: #004494;
+    }
+    .message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    .message.success {
+      background-color: #28a745;
+    }
+    .message.error {
+      background-color: #dc3545;
+    }
+     a{
+       color: white;
+      }
+    footer {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="report-container">
+  <h2>Sales Report</h2>
+
+  <button onclick="downloadPDF()">Download Report as PDF</button>
+  <button onclick="clearWeeklyData()">Clear Weekly Data</button>
+  <button onclick="clearAllData()">Clear All Data</button>
+  <br><br>
+    <!-- Location Filter Dropdown -->
+  <label for="locationFilter" style="margin-top: 15px; display: block; color: white;">Filter by Location:</label>
+  <select id="locationFilter" onchange="filterByLocation()" style="padding: 8px; margin: 10px 0;">
+    <option value="all">All Locations</option>
+    <!-- Options will be dynamically populated -->
+  </select>
+
+
+  <div id="message" class="message"></div>
+
+  <!-- Sales Report Table -->
+  <table id="sales-report-table">
+    <thead>
+      <tr>
+        <th>Location</th>
+        <th>Product Name</th>
+        <th>Size</th>
+        <th>Price (Ksh)</th>
+        <th>Quantity Available</th>
+        <th>Quantity Sold</th>
+        <th>Total Sales (Ksh)</th>
+        <th>Quantity Remaining</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Dynamic rows will be inserted here -->
+    </tbody>
+  </table>
+
+<br><br>
+<a href="ownerlogin.html"><b>← Go to login</b></a>
+<br><br>
+<footer>&copy; RATEK DevOps </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+
+<script>
+  // Load stock data and populate the table
+  function loadReport() {
+  const allStock = JSON.parse(localStorage.getItem("stockData")) || {};
+  const tableBody = document.querySelector("#sales-report-table tbody");
+  const filterDropdown = document.getElementById("locationFilter");
+
+  tableBody.innerHTML = ""; // Clear existing rows
+  filterDropdown.innerHTML = `<option value="all">All Locations</option>`; // Reset dropdown
+
+  Object.keys(allStock).forEach(location => {
+    // Populate dropdown
+    const option = document.createElement("option");
+    option.value = location;
+    option.textContent = location;
+    filterDropdown.appendChild(option);
+
+    // Add rows
+    allStock[location].forEach(item => {
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${location}</td>
+        <td>${item.name}</td>
+        <td>${item.size}</td>
+        <td>${item.price}</td>
+        <td>${item.quantityAvailable}</td>
+        <td>${item.quantitySold}</td>
+        <td>${item.totalSales}</td>
+        <td>${item.quantityRemaining}</td>
+      `;
+
+      tableBody.appendChild(row);
+    });
+  });
+}
+
+
+function filterByLocation() {
+  const selectedLocation = document.getElementById("locationFilter").value;
+  const rows = document.querySelectorAll("#sales-report-table tbody tr");
+
+  rows.forEach(row => {
+    const locationCell = row.children[0].textContent;
+    if (selectedLocation === "all" || locationCell === selectedLocation) {
+      row.style.display = "";
+    } else {
+      row.style.display = "none";
+    }
+  });
+}
+
+  // Download the sales report as a PDF
+ function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.text("Sales Report", 14, 15);
+
+  const table = document.querySelector("#sales-report-table");
+  doc.autoTable({
+    html: table,
+    startY: 25,
+    theme: 'striped',
+    headStyles: { fillColor: [0, 123, 255] },
+    styles: { fontSize: 10 }
+  });
+
+  doc.save("sales-report.pdf");
+}
+ 
+  // Clear weekly data (for all locations)
+  function clearWeeklyData() {
+    const allStock = JSON.parse(localStorage.getItem("stockData")) || {};
+    Object.keys(allStock).forEach(location => {
+      allStock[location].forEach(item => {
+        item.quantitySold = 0; // Reset sales count
+        item.totalSales = 0; // Reset sales value
+        item.quantityRemaining = item.quantityAvailable; // Restore available quantity
+      });
+    });
+    localStorage.setItem("stockData", JSON.stringify(allStock));
+    loadReport();
+    showMessage("Weekly data cleared successfully!", "success");
+  }
+
+  // Clear all data (for all locations)
+  function clearAllData() {
+    localStorage.removeItem("stockData");
+    loadReport();
+    showMessage("All data cleared successfully!", "success");
+  }
+
+  // Display message (success or error)
+  function showMessage(text, type) {
+    const messageBox = document.getElementById("message");
+    messageBox.textContent = text;
+    messageBox.className = `message ${type}`;
+    messageBox.style.display = "block";
+    setTimeout(() => {
+      messageBox.style.display = "none";
+    }, 3000);
+  }
+
+  // Load the report when the page is ready
+  document.addEventListener("DOMContentLoaded", loadReport);
+</script>
+
+</body>
+</html>

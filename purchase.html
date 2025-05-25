@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Purchase Item</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url('backgroundmain.png'); 
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: red;
+    }
+
+    form {
+      text-align: center;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    label, input, select {
+      display: block;
+      margin: 10px auto;
+      font-size: 1rem;
+    }
+
+    input, select {
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .credit-card-fields input {
+      margin: 5px 0;
+      width: 200px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: white;
+      color: #007BFF;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    a {
+      color: white;
+      margin-top: 20px;
+      text-decoration: underline;
+      text-align: center;
+    }
+
+    .mpesa-guide {
+      background-color: rgba(0,0,0,0.5);
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 10px;
+      max-width: 400px;
+    }
+     
+    .center-link {
+      text-align: center;
+      margin-top: 20px;
+   }
+   
+    p{
+      color: white;
+      }
+     
+    h3{
+      color: red;
+      }
+
+    footer {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Purchase Item</h1>
+  <form id="purchase-form">
+    <label for="item">Item Name:</label>
+    <input type="text" id="item" name="item" readonly>
+
+    <label for="payment-method">Select Payment Method:</label>
+    <select id="payment-method" name="payment-method">
+      <option value="">--Choose Method--</option>
+      <option value="mpesa">Mpesa</option>
+      <option value="paypal">PayPal</option>
+      <option value="credit-card">Credit Card</option>
+    </select>
+
+    <div id="mpesa-info" class="mpesa-guide hidden">
+      <h3>How to Pay with Mpesa:</h3>
+      
+        <p>Go to your Mpesa menu on your phone.</p>
+        <p>Select Lipa na Mpesa.</p>
+        <p>Choose Buy Goods and Services.</p>
+        <p>Enter Till Number: <b>8931198</b> </p>
+        <p>Enter the amount.</p>
+        <p>Enter your PIN and confirm.</p>
+      
+    </div>
+
+    <div id="credit-card-fields" class="credit-card-fields hidden">
+      <input type="text" placeholder="Cardholder Name" />
+      <input type="text" placeholder="Card Number" />
+      <input type="text" placeholder="Expiry Date (MM/YY)" />
+      <input type="text" placeholder="CVV" />
+    </div>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <div class="center-link">
+  <a href="services.html">← Back to Services</a>
+</div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    document.getElementById('item').value = urlParams.get('item') || 'TukTuk Spare Part';
+
+    const paymentSelect = document.getElementById('payment-method');
+    const mpesaInfo = document.getElementById('mpesa-info');
+    const creditCardFields = document.getElementById('credit-card-fields');
+    const form = document.getElementById('purchase-form');
+
+    paymentSelect.addEventListener('change', function () {
+      const selected = this.value;
+
+      mpesaInfo.classList.add('hidden');
+      creditCardFields.classList.add('hidden');
+
+      if (selected === 'mpesa') {
+        mpesaInfo.classList.remove('hidden');
+      } else if (selected === 'credit-card') {
+        creditCardFields.classList.remove('hidden');
+      }
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const selected = paymentSelect.value;
+
+      if (selected === 'paypal') {
+        // Redirect to PayPal sample link
+        window.location.href = 'https://www.paypal.com/checkoutnow';
+      } else if (selected === 'mpesa') {
+        alert("Please follow the Mpesa instructions displayed.");
+      } else if (selected === 'credit-card') {
+        alert("Your credit card details have been submitted securely.");
+      } else {
+        alert("Please select a payment method.");
+      }
+    });
+  </script>
+<!-- Footer -->
+  <footer>&copy; RATEK DevOps</footer>
+
+</body>
+</html>

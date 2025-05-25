@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ManKush - Update Stock</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url('backgroundmain.png'); 
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .stock-container {
+      background-color: rgba(0, 0, 0, 0.3);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      width: 95%;
+      max-width: 600px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+     
+    h2{
+      color: red;
+     }
+
+    input, select, button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 90%;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      background-color: #0056b3;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #004494;
+    }
+    .message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    .message.success {
+      background-color: #28a745;
+    }
+    .message.error {
+      background-color: #dc3545;
+    }
+    a {
+      color: #fff;
+      margin-top: 20px;
+      display: inline-block;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<div class="stock-container">
+<br><br><br><br>
+
+  <h1>Update Stock</h1>
+  <h2><b>Strictly Select Your Location</b></h2>
+<br><br>
+
+  <select id="location" required>
+    <option value="">-- Select Location --</option>
+    <option value="Murang'a">Murang'a</option>
+    <option value="Kahawa West">Kahawa West</option>
+    <option value="By-Pass">By-Pass</option>
+    <option value="Kimbo">Kimbo</option>
+  </select>
+
+  <input type="text" id="product-name" placeholder="Product Name" required />
+  <input type="text" id="product-size" placeholder="Size (Small, Medium, Size 12, Size 30 or serial number)" required />
+  <input type="number" id="product-price" placeholder="Price (Ksh)" required />
+  <input type="number" id="quantity-available" placeholder="Quantity Available" required />
+  <input type="number" id="quantity-sold" placeholder="Quantity Sold" required />
+
+  <input type="text" id="total-sales" placeholder="Total Sales (Ksh)" readonly />
+  <input type="text" id="quantity-remaining" placeholder="Quantity Remaining" readonly />
+
+  <button onclick="updateStock()"><b>Update</b></button>
+
+  <div id="message" class="message"></div>
+  
+  <a href="attendantlogin.html">← Go to login</a>
+
+<br><br>
+<footer>&copy; RATEK DevOps </footer>
+
+</div>
+
+<script>
+  const priceInput = document.getElementById("product-price");
+  const soldInput = document.getElementById("quantity-sold");
+  const availableInput = document.getElementById("quantity-available");
+  const totalSalesInput = document.getElementById("total-sales");
+  const remainingInput = document.getElementById("quantity-remaining");
+
+  // Auto-calculate fields
+  [priceInput, soldInput, availableInput].forEach(input => {
+    input.addEventListener("input", calculateFields);
+  });
+
+  function calculateFields() {
+    const price = parseFloat(priceInput.value) || 0;
+    const sold = parseInt(soldInput.value) || 0;
+    const available = parseInt(availableInput.value) || 0;
+
+    totalSalesInput.value = (price * sold).toFixed(2);
+    remainingInput.value = available - sold;
+  }
+
+  function updateStock() {
+    const location = document.getElementById("location").value.trim();
+    const name = document.getElementById("product-name").value.trim();
+    const size = document.getElementById("product-size").value.trim();
+    const price = parseFloat(priceInput.value.trim());
+    const quantityAvailable = parseInt(availableInput.value.trim());
+    const quantitySold = parseInt(soldInput.value.trim());
+    const totalSales = parseFloat(totalSalesInput.value.trim());
+    const quantityRemaining = parseInt(remainingInput.value.trim());
+    const messageBox = document.getElementById("message");
+
+    if (!location || !name || !size || isNaN(price) || isNaN(quantityAvailable) || isNaN(quantitySold)) {
+      showMessage("Please fill in all fields correctly.", "error");
+      return;
+    }
+
+    const newEntry = {
+      location,
+      name,
+      size,
+      price,
+      quantityAvailable,
+      quantitySold,
+      totalSales,
+      quantityRemaining
+    };
+
+    // Get location-based stock
+    let allStock = JSON.parse(localStorage.getItem("stockData")) || {};
+    if (!allStock[location]) {
+      allStock[location] = [];
+    }
+
+    // Update existing or add new
+    const existingIndex = allStock[location].findIndex(item =>
+      item.name.toLowerCase() === name.toLowerCase() &&
+      item.size.toLowerCase() === size.toLowerCase()
+    );
+
+    if (existingIndex >= 0) {
+      allStock[location][existingIndex] = newEntry;
+    } else {
+      allStock[location].push(newEntry);
+    }
+
+    // Save to localStorage
+    localStorage.setItem("stockData", JSON.stringify(allStock));
+    showMessage("Stock updated successfully!", "success");
+
+    // Clear fields
+    document.getElementById("product-name").value = "";
+    document.getElementById("product-size").value = "";
+    priceInput.value = "";
+    availableInput.value = "";
+    soldInput.value = "";
+    totalSalesInput.value = "";
+    remainingInput.value = "";
+  }
+
+  function showMessage(text, type) {
+    const messageBox = document.getElementById("message");
+    messageBox.textContent = text;
+    messageBox.className = `message ${type}`;
+    messageBox.style.display = "block";
+    setTimeout(() => {
+      messageBox.style.display = "none";
+    }, 3000);
+  }
+
+</script>
+
+</body>
+</html>
