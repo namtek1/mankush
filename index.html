@@ -154,6 +154,67 @@
     <h1>Welcome to ManKush Enterprises</h1>
   </div>
 
+
+
+ <script type="module">
+  // Import Firebase modules
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // 🔐 Your Firebase config (copy from Firebase console under "Web App")
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhYuI0JMW7Eq7XLpgMUDFx6d4s9eD4Ypw",
+    authDomain: "mankush-feb34.firebaseapp.com",
+    projectId: "mankush-feb34",
+    storageBucket: "mankush-feb34.firebasestorage.app",
+    messagingSenderId: "725955538335",
+    appId: "1:725955538335:web:832006172708788efba1aa"
+  };
+
+  // 🔧 Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 📝 Function to add stock data (call manually or connect to a form)
+  async function addStock(data) {
+    await addDoc(collection(db, "stock"), {
+      location: data.location,
+      productName: data.productName,
+      size: data.size,
+      price: data.price,
+      quantityAvailable: data.quantityAvailable,
+      quantitySold: data.quantitySold,
+      totalSales: data.totalSales,
+      quantityRemaining: data.quantityRemaining,
+      timestamp: new Date()
+    });
+  }
+
+  // Display stock data in table with real-time updates
+  const stockTableBody = document.getElementById("stockTableBody");
+
+  onSnapshot(collection(db, "stock"), (snapshot) => {
+    stockTableBody.innerHTML = ""; // Clear old data
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${d.location}</td>
+        <td>${d.productName}</td>
+        <td>${d.size}</td>
+        <td>${d.price}</td>
+        <td>${d.quantityAvailable}</td>
+        <td>${d.quantitySold}</td>
+        <td>${d.totalSales}</td>
+        <td>${d.quantityRemaining}</td>
+      `;
+      stockTableBody.appendChild(row);
+    });
+  });
+
+</script>
+
+
   <!-- Footer -->
   <footer>&copy; RATEK DevOps</footer>
 </body>
