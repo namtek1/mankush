@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.4/+esm"></script>
+
   <title>ManKush - Sales Report</title>
   <style>
      body {
@@ -133,45 +135,69 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.4/+esm'
 
-<script>
-  // Load stock data and populate the table
-  function loadReport() {
-  const allStock = JSON.parse(localStorage.getItem("stockData")) || {};
-  const tableBody = document.querySelector("#sales-report-table tbody");
-  const filterDropdown = document.getElementById("locationFilter");
+const supabase = createClient('https://fadxtlgkuamjttczeviv.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZHh0bGdrdWFtanR0Y3pldml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5NTE1ODQsImV4cCI6MjA2NDUyNzU4NH0.MTlovNnO2qfpn1Jjlbd3qUIk5gbcHdcM2MgcZk6RuHA')
 
-  tableBody.innerHTML = ""; // Clear existing rows
-  filterDropdown.innerHTML = `<option value="all">All Locations</option>`; // Reset dropdown
-
-  Object.keys(allStock).forEach(location => {
-    // Populate dropdown
-    const option = document.createElement("option");
-    option.value = location;
-    option.textContent = location;
-    filterDropdown.appendChild(option);
-
-    // Add rows
-    allStock[location].forEach(item => {
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${location}</td>
-        <td>${item.name}</td>
-        <td>${item.size}</td>
-        <td>${item.price}</td>
-        <td>${item.quantityAvailable}</td>
-        <td>${item.quantitySold}</td>
-        <td>${item.totalSales}</td>
-        <td>${item.quantityRemaining}</td>
-      `;
-
-      tableBody.appendChild(row);
-    });
-  });
+async function loadReport() {
+  const { data, error } = await supabase.from('stock_updates').select('*')
+  if (error) {
+    console.error(error)
+    return
+  }
+  displayReport(data)
 }
 
+// Display data in the table
+function displayReport(data) {
+  const tableBody = document.querySelector("#sales-report-table tbody")
+  const filterDropdown = document.getElementById("locationFilter")
+  tableBody.innerHTML = ""
+  filterDropdown.innerHTML = `<option value="all">All Locations</option>`
 
+  const locationsSet = new Set()
+
+  data.forEach(item => {
+    const row = document.createElement("tr")
+    row.innerHTML = `
+      <td>${item.location}</td>
+      <td>${item.name}</td>
+      <td>${item.size}</td>
+      <td>${item.price}</td>
+      <td>${item.quantityAvailable}</td>
+      <td>${item.quantitySold}</td>
+      <td>${item.totalSales}</td>
+      <td>${item.quantityRemaining}</td>
+    `
+    tableBody.appendChild(row)
+    locationsSet.add(item.location)
+  })
+
+  // Add locations to filter
+  locationsSet.forEach(loc => {
+    const option = document.createElement("option")
+    option.value = loc
+    option.textContent = loc
+    filterDropdown.appendChild(option)
+  })
+}
+
+// Subscribe to realtime updates
+supabase
+  .channel('realtime-stock')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stock_updates' }, payload => {
+    console.log('New stock entry:', payload.new)
+    loadReport()
+  })
+  .subscribe()
+
+document.addEventListener("DOMContentLoaded", loadReport)
+</script>
+
+
+
+<script>
 function filterByLocation() {
   const selectedLocation = document.getElementById("locationFilter").value;
   const rows = document.querySelectorAll("#sales-report-table tbody tr");
