@@ -136,126 +136,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.4/+esm'
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.4/+esm'
 
-const supabase = createClient('https://fadxtlgkuamjttczeviv.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZHh0bGdrdWFtanR0Y3pldml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5NTE1ODQsImV4cCI6MjA2NDUyNzU4NH0.MTlovNnO2qfpn1Jjlbd3qUIk5gbcHdcM2MgcZk6RuHA')
+  const supabase = createClient('https://fadxtlgkuamjttczeviv.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZHh0bGdrdWFtanR0Y3pldml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5NTE1ODQsImV4cCI6MjA2NDUyNzU4NH0.MTlovNnO2qfpn1Jjlbd3qUIk5gbcHdcM2MgcZk6RuHA')
 
-async function loadReport() {
-  const { data, error } = await supabase.from('stock_updates').select('*')
-  if (error) {
-    console.error(error)
-    return
-  }
-  displayReport(data)
-}
+  const tableBody = document.querySelector("#sales-report-table tbody");
+  const filterDropdown = document.getElementById("locationFilter");
+  const messageBox = document.getElementById("message");
 
-// Display data in the table
-function displayReport(data) {
-  const tableBody = document.querySelector("#sales-report-table tbody")
-  const filterDropdown = document.getElementById("locationFilter")
-  tableBody.innerHTML = ""
-  filterDropdown.innerHTML = `<option value="all">All Locations</option>`
-
-  const locationsSet = new Set()
-
-  data.forEach(item => {
-    const row = document.createElement("tr")
-    row.innerHTML = `
-      <td>${item.location}</td>
-      <td>${item.name}</td>
-      <td>${item.size}</td>
-      <td>${item.price}</td>
-      <td>${item.quantityAvailable}</td>
-      <td>${item.quantitySold}</td>
-      <td>${item.totalSales}</td>
-      <td>${item.quantityRemaining}</td>
-    `
-    tableBody.appendChild(row)
-    locationsSet.add(item.location)
-  })
-
-  // Add locations to filter
-  locationsSet.forEach(loc => {
-    const option = document.createElement("option")
-    option.value = loc
-    option.textContent = loc
-    filterDropdown.appendChild(option)
-  })
-}
-
-// Subscribe to realtime updates
-supabase
-  .channel('realtime-stock')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stock_updates' }, payload => {
-    console.log('New stock entry:', payload.new)
-    loadReport()
-  })
-  .subscribe()
-
-document.addEventListener("DOMContentLoaded", loadReport)
-</script>
-
-
-
-<script>
-function filterByLocation() {
-  const selectedLocation = document.getElementById("locationFilter").value;
-  const rows = document.querySelectorAll("#sales-report-table tbody tr");
-
-  rows.forEach(row => {
-    const locationCell = row.children[0].textContent;
-    if (selectedLocation === "all" || locationCell === selectedLocation) {
-      row.style.display = "";
-    } else {
-      row.style.display = "none";
-    }
-  });
-}
-
-  // Download the sales report as a PDF
- function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  doc.text("Sales Report", 14, 15);
-
-  const table = document.querySelector("#sales-report-table");
-  doc.autoTable({
-    html: table,
-    startY: 25,
-    theme: 'striped',
-    headStyles: { fillColor: [0, 123, 255] },
-    styles: { fontSize: 10 }
-  });
-
-  doc.save("sales-report.pdf");
-}
- 
-  // Clear weekly data (for all locations)
-  function clearWeeklyData() {
-    const allStock = JSON.parse(localStorage.getItem("stockData")) || {};
-    Object.keys(allStock).forEach(location => {
-      allStock[location].forEach(item => {
-        item.quantitySold = 0; // Reset sales count
-        item.totalSales = 0; // Reset sales value
-        item.quantityRemaining = item.quantityAvailable; // Restore available quantity
-      });
-    });
-    localStorage.setItem("stockData", JSON.stringify(allStock));
-    loadReport();
-    showMessage("Weekly data cleared successfully!", "success");
-  }
-
-  // Clear all data (for all locations)
-  function clearAllData() {
-    localStorage.removeItem("stockData");
-    loadReport();
-    showMessage("All data cleared successfully!", "success");
-  }
-
-  // Display message (success or error)
   function showMessage(text, type) {
-    const messageBox = document.getElementById("message");
     messageBox.textContent = text;
     messageBox.className = `message ${type}`;
     messageBox.style.display = "block";
@@ -264,9 +153,101 @@ function filterByLocation() {
     }, 3000);
   }
 
-  // Load the report when the page is ready
+  function displayReport(data) {
+    tableBody.innerHTML = "";
+    const locationsSet = new Set();
+
+    data.forEach(item => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${item.location}</td>
+        <td>${item.name}</td>
+        <td>${item.size}</td>
+        <td>${item.price}</td>
+        <td>${item.quantityAvailable}</td>
+        <td>${item.quantitySold}</td>
+        <td>${item.totalSales}</td>
+        <td>${item.quantityRemaining}</td>
+      `;
+      tableBody.appendChild(row);
+      locationsSet.add(item.location);
+    });
+
+    filterDropdown.innerHTML = `<option value="all">All Locations</option>`;
+    locationsSet.forEach(loc => {
+      const option = document.createElement("option");
+      option.value = loc;
+      option.textContent = loc;
+      filterDropdown.appendChild(option);
+    });
+  }
+
+  async function loadReport() {
+    const { data, error } = await supabase.from('stock_updates').select('*');
+    if (error) {
+      console.error(error);
+      showMessage("Failed to load report", "error");
+    } else {
+      displayReport(data);
+    }
+  }
+
+  window.filterByLocation = function () {
+    const selectedLocation = filterDropdown.value;
+    const rows = document.querySelectorAll("#sales-report-table tbody tr");
+
+    rows.forEach(row => {
+      const locationCell = row.children[0].textContent;
+      row.style.display = (selectedLocation === "all" || locationCell === selectedLocation) ? "" : "none";
+    });
+  }
+
+  window.downloadPDF = function () {
+    import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm').then(({ jsPDF }) => {
+      import('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.29/+esm').then(() => {
+        const doc = new jsPDF();
+        doc.text("Sales Report", 14, 15);
+        doc.autoTable({ html: "#sales-report-table", startY: 25, theme: 'striped', headStyles: { fillColor: [0, 123, 255] }, styles: { fontSize: 10 } });
+        doc.save("sales-report.pdf");
+      });
+    });
+  }
+
+  window.clearWeeklyData = async function () {
+    const { data, error } = await supabase.from('stock_updates').select('*');
+    if (error) {
+      showMessage("Failed to load records", "error");
+      return;
+    }
+
+    for (const row of data) {
+      await supabase.from('stock_updates').update({
+        quantitySold: 0,
+        totalSales: 0,
+        quantityRemaining: row.quantityAvailable
+      }).eq('id', row.id);
+    }
+
+    await loadReport();
+    showMessage("Weekly data cleared successfully!", "success");
+  }
+
+  window.clearAllData = async function () {
+    await supabase.from('stock_updates').delete().neq('id', 0);
+    await loadReport();
+    showMessage("All data cleared successfully!", "success");
+  }
+
+  supabase
+    .channel('stock-updates')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_updates' }, payload => {
+      loadReport();
+    })
+    .subscribe();
+
   document.addEventListener("DOMContentLoaded", loadReport);
 </script>
+
 
 </body>
 </html>
