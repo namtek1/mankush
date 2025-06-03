@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.4/+esm"></script>
   <title>ManKush - Update Stock</title>
   <style>
     body {
@@ -132,53 +133,37 @@
     remainingInput.value = available - sold;
   }
 
-  function updateStock() {
-    const location = document.getElementById("location").value.trim();
-    const name = document.getElementById("product-name").value.trim();
-    const size = document.getElementById("product-size").value.trim();
-    const price = parseFloat(priceInput.value.trim());
-    const quantityAvailable = parseInt(availableInput.value.trim());
-    const quantitySold = parseInt(soldInput.value.trim());
-    const totalSales = parseFloat(totalSalesInput.value.trim());
-    const quantityRemaining = parseInt(remainingInput.value.trim());
-    const messageBox = document.getElementById("message");
 
-    if (!location || !name || !size || isNaN(price) || isNaN(quantityAvailable) || isNaN(quantitySold)) {
-      showMessage("Please fill in all fields correctly.", "error");
-      return;
-    }
+  <script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.4/+esm'
 
-    const newEntry = {
-      location,
-      name,
-      size,
-      price,
-      quantityAvailable,
-      quantitySold,
-      totalSales,
-      quantityRemaining
-    };
+const supabase = createClient('https://fadxtlgkuamjttczeviv.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZHh0bGdrdWFtanR0Y3pldml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5NTE1ODQsImV4cCI6MjA2NDUyNzU4NH0.MTlovNnO2qfpn1Jjlbd3qUIk5gbcHdcM2MgcZk6RuHA')
 
-    // Get location-based stock
-    let allStock = JSON.parse(localStorage.getItem("stockData")) || {};
-    if (!allStock[location]) {
-      allStock[location] = [];
-    }
+window.updateStock = async function () {
+  const location = document.getElementById("location").value.trim();
+  const name = document.getElementById("product-name").value.trim();
+  const size = document.getElementById("product-size").value.trim();
+  const price = parseFloat(priceInput.value.trim());
+  const quantityAvailable = parseInt(availableInput.value.trim());
+  const quantitySold = parseInt(soldInput.value.trim());
+  const totalSales = parseFloat(totalSalesInput.value.trim());
+  const quantityRemaining = parseInt(remainingInput.value.trim());
 
-    // Update existing or add new
-    const existingIndex = allStock[location].findIndex(item =>
-      item.name.toLowerCase() === name.toLowerCase() &&
-      item.size.toLowerCase() === size.toLowerCase()
-    );
+  if (!location || !name || !size || isNaN(price) || isNaN(quantityAvailable) || isNaN(quantitySold)) {
+    showMessage("Please fill in all fields correctly.", "error");
+    return;
+  }
 
-    if (existingIndex >= 0) {
-      allStock[location][existingIndex] = newEntry;
-    } else {
-      allStock[location].push(newEntry);
-    }
+  const { error } = await supabase.from('stock_updates').insert([{
+    location, name, size, price,
+    quantityAvailable, quantitySold,
+    totalSales, quantityRemaining
+  }])
 
-    // Save to localStorage
-    localStorage.setItem("stockData", JSON.stringify(allStock));
+  if (error) {
+    showMessage("Error saving to Supabase.", "error");
+    console.error(error);
+  } else {
     showMessage("Stock updated successfully!", "success");
 
     // Clear fields
@@ -190,17 +175,10 @@
     totalSalesInput.value = "";
     remainingInput.value = "";
   }
+}
+</script>
 
-  function showMessage(text, type) {
-    const messageBox = document.getElementById("message");
-    messageBox.textContent = text;
-    messageBox.className = `message ${type}`;
-    messageBox.style.display = "block";
-    setTimeout(() => {
-      messageBox.style.display = "none";
-    }, 3000);
-  }
-
+  
 </script>
 
 </body>
